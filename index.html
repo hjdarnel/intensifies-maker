@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GIF Intensifier</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .disclaimer {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+            color: #999;
+        }
+
+        .disclaimer a {
+            color: #4a9eff;
+            text-decoration: none;
+        }
+
+        .disclaimer a:hover {
+            text-decoration: underline;
+        }
+
+        .upload-area {
+            border: 3px dashed #555;
+            border-radius: 10px;
+            padding: 60px 20px;
+            text-align: center;
+            background: #2a2a2a;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 30px;
+        }
+
+        .upload-area:hover,
+        .upload-area.drag-over {
+            border-color: #4a9eff;
+            background: #333;
+        }
+
+        .upload-area input[type="file"] {
+            display: none;
+        }
+
+        .upload-text {
+            font-size: 1.2em;
+            color: #aaa;
+        }
+
+        .controls {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #555;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4a9eff;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4a9eff;
+            cursor: pointer;
+            border: none;
+        }
+
+        .value-display {
+            display: inline-block;
+            color: #4a9eff;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        button {
+            background: #4a9eff;
+            color: #fff;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        button:hover:not(:disabled) {
+            background: #3a8eef;
+        }
+
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .preview-area {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .preview-container {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        .preview-container img {
+            max-width: 100%;
+            max-height: 400px;
+            display: block;
+        }
+
+        .status {
+            text-align: center;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .status.info {
+            background: #2a4a6a;
+            color: #4a9eff;
+        }
+
+        .status.success {
+            background: #2a4a2a;
+            color: #4aff4a;
+        }
+
+        .status.error {
+            background: #4a2a2a;
+            color: #ff4a4a;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #333;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 15px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4a9eff, #3a8eef);
+            width: 0%;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔥 GIF Intensifier</h1>
+        <p class="disclaimer">A vibe-coded project by <a href="https://github.com/hjdarnel/intensifies-maker" target="_blank" rel="noopener noreferrer">Henry Darnell</a></p>
+
+        <div class="upload-area" id="uploadArea">
+            <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp">
+            <div class="upload-text">
+                Drop an image here or click to select<br>
+                <small>(PNG, JPEG, WebP supported)</small>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label>
+                    Shake Intensity: <span class="value-display" id="intensityValue">20</span>px
+                </label>
+                <input type="range" id="intensity" min="0" max="40" value="20" step="1">
+            </div>
+
+            <div class="control-group">
+                <label>
+                    Frame Count: <span class="value-display" id="frameCountValue">20</span>
+                </label>
+                <input type="range" id="frameCount" min="10" max="50" value="20" step="5">
+            </div>
+
+            <div class="control-group">
+                <label>
+                    Frame Delay: <span class="value-display" id="delayValue">75</span>ms
+                </label>
+                <input type="range" id="delay" min="10" max="150" value="50" step="10">
+            </div>
+        </div>
+
+        <div id="status" class="status hidden"></div>
+
+        <button id="generateBtn" disabled>Generate Intensifies GIF</button>
+
+        <div id="progressContainer" class="hidden">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill">0%</div>
+            </div>
+        </div>
+
+        <div class="preview-area hidden" id="previewArea">
+            <h2>Preview:</h2>
+            <div class="preview-container">
+                <img id="previewImg" alt="Generated GIF">
+            </div>
+            <button id="downloadBtn">Download GIF</button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/omggif@1.0.10/omggif.js"></script>
+    <script>
+        // State
+        let uploadedImage = null;
+        let generatedGifBlob = null;
+        let uploadedFileName = '';
+
+        // Elements
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const intensitySlider = document.getElementById('intensity');
+        const intensityValue = document.getElementById('intensityValue');
+        const frameCountSlider = document.getElementById('frameCount');
+        const frameCountValue = document.getElementById('frameCountValue');
+        const delaySlider = document.getElementById('delay');
+        const delayValue = document.getElementById('delayValue');
+        const generateBtn = document.getElementById('generateBtn');
+        const statusDiv = document.getElementById('status');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const previewArea = document.getElementById('previewArea');
+        const previewImg = document.getElementById('previewImg');
+        const downloadBtn = document.getElementById('downloadBtn');
+
+        // Slider value updates
+        intensitySlider.addEventListener('input', (e) => {
+            intensityValue.textContent = e.target.value;
+        });
+
+        frameCountSlider.addEventListener('input', (e) => {
+            frameCountValue.textContent = e.target.value;
+        });
+
+        delaySlider.addEventListener('input', (e) => {
+            delayValue.textContent = e.target.value;
+        });
+
+        // File upload handling
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('drag-over');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('drag-over');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            if (!file.type.match(/image\/(png|jpeg|webp)/)) {
+                showStatus('Please upload a PNG, JPEG, or WebP image', 'error');
+                return;
+            }
+
+            uploadedFileName = file.name;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    uploadedImage = img;
+                    generateBtn.disabled = false;
+                    showStatus(`Image loaded: ${img.width}x${img.height}px`, 'success');
+                    previewArea.classList.add('hidden');
+                };
+                img.onerror = () => {
+                    showStatus('Failed to load image', 'error');
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function showStatus(message, type = 'info') {
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+            statusDiv.classList.remove('hidden');
+        }
+
+        function hideStatus() {
+            statusDiv.classList.add('hidden');
+        }
+
+        // Median-cut color quantization algorithm for better quality
+        function quantizeColors(imageData) {
+            const data = imageData.data;
+            const width = imageData.width;
+            const height = imageData.height;
+            const indexedPixels = new Uint8Array(width * height);
+            
+            // Check for transparency first
+            let hasTransparency = false;
+            const opaquePixels = [];
+            
+            for (let i = 0; i < data.length; i += 4) {
+                const a = data[i + 3];
+                if (a < 128) {
+                    hasTransparency = true;
+                } else {
+                    opaquePixels.push({
+                        r: data[i],
+                        g: data[i + 1],
+                        b: data[i + 2],
+                        index: i / 4
+                    });
+                }
+            }
+            
+            // Build palette using median cut
+            const maxColors = hasTransparency ? 255 : 256;
+            const palette = medianCut(opaquePixels, maxColors);
+            
+            // If transparency, add transparent color at index 0
+            if (hasTransparency) {
+                palette.unshift(0x000000);
+            }
+            
+            // Ensure exactly 256 colors
+            while (palette.length < 256) {
+                palette.push(0x000000);
+            }
+            
+            // Convert palette to RGB for matching
+            const paletteRGB = palette.map(c => ({
+                r: (c >> 16) & 0xFF,
+                g: (c >> 8) & 0xFF,
+                b: c & 0xFF
+            }));
+            
+            // Map all pixels to palette
+            const startIndex = hasTransparency ? 1 : 0;
+            for (let i = 0; i < data.length; i += 4) {
+                const a = data[i + 3];
+                
+                if (a < 128 && hasTransparency) {
+                    indexedPixels[i / 4] = 0;
+                } else {
+                    const r = data[i];
+                    const g = data[i + 1];
+                    const b = data[i + 2];
+                    
+                    let minDist = Infinity;
+                    let bestIndex = startIndex;
+                    
+                    for (let p = startIndex; p < paletteRGB.length; p++) {
+                        const pc = paletteRGB[p];
+                        const dist = (r - pc.r) * (r - pc.r) + 
+                                    (g - pc.g) * (g - pc.g) + 
+                                    (b - pc.b) * (b - pc.b);
+                        
+                        if (dist < minDist) {
+                            minDist = dist;
+                            bestIndex = p;
+                        }
+                    }
+                    
+                    indexedPixels[i / 4] = bestIndex;
+                }
+            }
+            
+            return { palette, indexedPixels, transparentIndex: hasTransparency ? 0 : null };
+        }
+        
+        // Median cut algorithm implementation
+        function medianCut(pixels, maxColors) {
+            if (pixels.length === 0) {
+                return [0x000000];
+            }
+            
+            // Start with all pixels in one bucket
+            const buckets = [pixels];
+            
+            // Keep splitting until we have enough colors
+            while (buckets.length < maxColors) {
+                // Find bucket with largest range
+                let maxRange = -1;
+                let maxBucketIndex = -1;
+                let maxChannel = 'r';
+                
+                for (let i = 0; i < buckets.length; i++) {
+                    const bucket = buckets[i];
+                    if (bucket.length <= 1) continue;
+                    
+                    const ranges = getColorRanges(bucket);
+                    const biggestRange = Math.max(ranges.r, ranges.g, ranges.b);
+                    
+                    if (biggestRange > maxRange) {
+                        maxRange = biggestRange;
+                        maxBucketIndex = i;
+                        maxChannel = ranges.r >= ranges.g && ranges.r >= ranges.b ? 'r' :
+                                    ranges.g >= ranges.b ? 'g' : 'b';
+                    }
+                }
+                
+                if (maxBucketIndex === -1) break;
+                
+                // Split the bucket
+                const bucket = buckets[maxBucketIndex];
+                bucket.sort((a, b) => a[maxChannel] - b[maxChannel]);
+                const median = Math.floor(bucket.length / 2);
+                
+                buckets.splice(maxBucketIndex, 1, 
+                    bucket.slice(0, median),
+                    bucket.slice(median)
+                );
+            }
+            
+            // Get average color from each bucket
+            return buckets.map(bucket => {
+                if (bucket.length === 0) return 0x000000;
+                
+                let sumR = 0, sumG = 0, sumB = 0;
+                for (const pixel of bucket) {
+                    sumR += pixel.r;
+                    sumG += pixel.g;
+                    sumB += pixel.b;
+                }
+                
+                const r = Math.round(sumR / bucket.length);
+                const g = Math.round(sumG / bucket.length);
+                const b = Math.round(sumB / bucket.length);
+                
+                return (r << 16) | (g << 8) | b;
+            });
+        }
+        
+        function getColorRanges(pixels) {
+            let minR = 255, maxR = 0;
+            let minG = 255, maxG = 0;
+            let minB = 255, maxB = 0;
+            
+            for (const pixel of pixels) {
+                minR = Math.min(minR, pixel.r);
+                maxR = Math.max(maxR, pixel.r);
+                minG = Math.min(minG, pixel.g);
+                maxG = Math.max(maxG, pixel.g);
+                minB = Math.min(minB, pixel.b);
+                maxB = Math.max(maxB, pixel.b);
+            }
+            
+            return {
+                r: maxR - minR,
+                g: maxG - minG,
+                b: maxB - minB
+            };
+        }
+
+        // GIF Generation
+        generateBtn.addEventListener('click', generateGif);
+
+        async function generateGif() {
+            if (!uploadedImage) return;
+
+            const intensity = parseInt(intensitySlider.value);
+            const frameCount = parseInt(frameCountSlider.value);
+            const delay = parseInt(delaySlider.value);
+
+            generateBtn.disabled = true;
+            previewArea.classList.add('hidden');
+            progressContainer.classList.remove('hidden');
+            showStatus('Generating GIF...', 'info');
+            updateProgress(0);
+
+            try {
+                // Create canvas for rendering frames
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                
+                // Add padding to canvas to accommodate shake without cropping
+                const padding = intensity * 2;
+                canvas.width = uploadedImage.width + padding;
+                canvas.height = uploadedImage.height + padding;
+
+                // Collect all frames first
+                const frames = [];
+                for (let i = 0; i < frameCount; i++) {
+                    // Clear canvas with transparency
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                    // Random offset for shake effect
+                    const offsetX = (Math.random() - 0.5) * 2 * intensity;
+                    const offsetY = (Math.random() - 0.5) * 2 * intensity;
+
+                    // Draw image centered with offset (padding/2 centers it, then add shake offset)
+                    ctx.drawImage(
+                        uploadedImage,
+                        padding / 2 + offsetX,
+                        padding / 2 + offsetY,
+                        uploadedImage.width,
+                        uploadedImage.height
+                    );
+
+                    // Get image data
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    frames.push(imageData);
+
+                    // Update progress
+                    updateProgress(Math.round(((i + 1) / frameCount) * 50));
+
+                    // Allow UI to update
+                    await new Promise(resolve => setTimeout(resolve, 0));
+                }
+
+                // Create GIF
+                const buf = new Uint8Array(canvas.width * canvas.height * frameCount * 5);
+                const gif = new GifWriter(buf, canvas.width, canvas.height, { loop: 0 });
+
+                // Add frames to GIF
+                for (let i = 0; i < frames.length; i++) {
+                    const { palette, indexedPixels, transparentIndex } = quantizeColors(frames[i]);
+                    
+                    const frameOptions = {
+                        palette: palette,
+                        delay: delay / 10, // GIF delay is in centiseconds
+                        disposal: 2 // Disposal method 2: restore to background color before next frame
+                    };
+                    
+                    // Add transparency if present
+                    if (transparentIndex !== null) {
+                        frameOptions.transparent = transparentIndex;
+                    }
+                    
+                    gif.addFrame(0, 0, canvas.width, canvas.height, indexedPixels, frameOptions);
+
+                    updateProgress(50 + Math.round(((i + 1) / frames.length) * 50));
+                    await new Promise(resolve => setTimeout(resolve, 0));
+                }
+
+                // Create blob from GIF data
+                const actualLength = gif.end();
+                const gifData = buf.slice(0, actualLength);
+                generatedGifBlob = new Blob([gifData], { type: 'image/gif' });
+                
+                const url = URL.createObjectURL(generatedGifBlob);
+                previewImg.src = url;
+                previewArea.classList.remove('hidden');
+                progressContainer.classList.add('hidden');
+                showStatus('GIF generated successfully!', 'success');
+                generateBtn.disabled = false;
+            } catch (error) {
+                console.error('Error generating GIF:', error);
+                showStatus('Error generating GIF: ' + error.message, 'error');
+                progressContainer.classList.add('hidden');
+                generateBtn.disabled = false;
+            }
+        }
+
+        function updateProgress(percent) {
+            progressFill.style.width = percent + '%';
+            progressFill.textContent = percent + '%';
+        }
+
+        // Download
+        downloadBtn.addEventListener('click', () => {
+            if (!generatedGifBlob) return;
+
+            // Generate filename from original file
+            let downloadName = 'intensified.gif';
+            if (uploadedFileName) {
+                const nameParts = uploadedFileName.split('.');
+                if (nameParts.length > 1) {
+                    nameParts.pop(); // Remove extension
+                }
+                downloadName = nameParts.join('.') + '-intensifies.gif';
+            }
+
+            const url = URL.createObjectURL(generatedGifBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = downloadName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showStatus('Download started!', 'success');
+        });
+    </script>
+</body>
+</html>
